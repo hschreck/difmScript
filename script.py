@@ -46,18 +46,13 @@ def get_most_recent_track(channel):
     return get_track_history(channel)[0]
 
 def vote(track_id, direction, channel = None):
-    print(channel, track_id, direction)
     if channel is not None:
         channel = str(CHANNELS[channel]['id']) + "/"
-    print(channel)
     request_url = f"https://api.audioaddict.com/v1/{AA_NETWORK_KEY}/tracks/{track_id}/vote/{channel}{direction}/"
-    print(request_url)
     response = requests.post(request_url, headers={'X-Session-Key': TOKEN})
-    print(response.text)
     
 def vote_current_track(channel, direction):
     track = get_most_recent_track(channel)
-    print(track)
     vote(track['track_id'], direction, channel)
 
 def get_channel():
@@ -69,19 +64,24 @@ def update_now_playing(channel):
     track = get_most_recent_track(channel)
     expires = int(track['started']) + int(track['duration'])
     global now_playing
-    now_playing = {"channel": channel, "expires": expires, "track": track}
+    now_playing = {"channel": channel, "expires": expires, "track": track, "vote": "X"}
+    print("Updating track...")
 
 @app.route("/nowplaying/")
 def nowplaying():
     channel = get_channel()
-    if now_playing['channel'] is not channel:
+    if now_playing['channel'] != channel:
         update_now_playing(channel)
+        print("Updated because of channel update")
     if now_playing['expires'] < time.time():
         update_now_playing(channel)
-    return "Ch: %s :: %s - %s" % (CHANNELS[channel]['name'], now_playing['track']['display_artist'], now_playing['track']['display_title'])
+        print("Updated because of expiration")
+    return "Ch: %s :: %s - %s :: Vt %s" % (CHANNELS[channel]['name'], now_playing['track']['display_artist'], now_playing['track']['display_title'], now_playing['vote'])
 
 @app.route("/vote/<direction>")
 def vote_url(direction):
+    global now_playing
+    now_playing['vote'] = direction
     channel = get_channel()
     vote_current_track(channel, direction)
     return "OK!"
