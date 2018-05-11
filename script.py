@@ -76,7 +76,8 @@ def nowplaying():
     if now_playing['expires'] < time.time():
         update_now_playing(channel)
         print("Updated because of expiration")
-    return "Ch: %s :: %s - %s :: Vt %s" % (CHANNELS[channel]['name'], now_playing['track']['display_artist'], now_playing['track']['display_title'], now_playing['vote'])
+    returnString = "Ch: %s :: %s - %s :: Vt %s" % (CHANNELS[channel]['name'], now_playing['track']['display_artist'], now_playing['track']['display_title'], now_playing['vote'])
+    return returnString.ljust(100)
 
 @app.route("/vote/<direction>")
 def vote_url(direction):
