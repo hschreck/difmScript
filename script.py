@@ -11,6 +11,7 @@ AA_NETWORK_KEY = os.environ['AA_NETWORK_KEY']
 AA_USERNAME = os.environ['AA_USERNAME']
 AA_PASSWORD = os.environ['AA_PASSWORD']
 AUDIO_PLAYER = os.environ['AUDIO_PLAYER']
+NOTIFICATION_URL = os.environ['NOTIFICATION_URL']
 
 now_playing = {"channel":"test", "expires":0}
 
@@ -51,6 +52,7 @@ def vote(track_id, direction, channel = None):
     request_url = f"https://api.audioaddict.com/v1/{AA_NETWORK_KEY}/tracks/{track_id}/vote/{channel}{direction}/"
     response = requests.post(request_url, headers={'X-Session-Key': TOKEN})
     
+    
 def vote_current_track(channel, direction):
     track = get_most_recent_track(channel)
     vote(track['track_id'], direction, channel)
@@ -82,7 +84,12 @@ def nowplaying():
 @app.route("/vote/<direction>")
 def vote_url(direction):
     global now_playing
-    now_playing['vote'] = direction
     channel = get_channel()
+    sendString = "{'text': '(%s) %s -- %s [%s]'}" % (CHANNELS[channel]['name'], now_playing['track']['display_artist'], now_playing['track']['display_title'], direction)
+    #sendString = f"{'text': '({CHANNELS[channel]['name']}) {now_playing['track']['display_artist']} -- {now_playing['track']['display_title']} [{direction}]'}" 
+    print(sendString)
+    response = requests.post(NOTIFICATION_URL, headers={"Content-type": "application/json"}, data=sendString)
+    print(response.text) 
+    now_playing['vote'] = direction
     vote_current_track(channel, direction)
     return "OK!"
